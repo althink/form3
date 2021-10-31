@@ -1,19 +1,28 @@
 package accounts
 
+import "fmt"
+
+type InvalidDataError struct {
+	Code string `json:"error_code"`
+	Msg  string `json:"error_message"`
+}
+
+func (e *InvalidDataError) Error() string {
+	return e.Msg
+}
+
 type AccountNotFoundError struct {
-	ID  string
-	msg string
+	ID string
 }
 
 func (e *AccountNotFoundError) Error() string {
-	return e.msg
+	return fmt.Sprintf("Account not found: %s", e.ID)
 }
 
 type InvalidVersionError struct {
-	Ver string
-	msg string
+	Ver int64
 }
 
 func (e *InvalidVersionError) Error() string {
-	return e.msg
+	return fmt.Sprintf("Invalid version: %d", e.Ver)
 }

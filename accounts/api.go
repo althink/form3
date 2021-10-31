@@ -16,7 +16,7 @@ type Service interface {
 	Fetch(ctx context.Context, id string) (*FetchSuccess, error)
 
 	// Delete an account
-	Delete(ctx context.Context, id string, version string) error
+	Delete(ctx context.Context, id string, version int64) error
 }
 
 type CreateSuccess struct {

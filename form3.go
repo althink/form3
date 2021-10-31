@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/althink/form3/accounts"
 )
@@ -46,7 +47,11 @@ func NewClient(opts ...Option) (*Form3, error) {
 		o(f3)
 	}
 
-	f3.Accounts = accounts.NewClient(f3.httpClient)
+	if !strings.HasSuffix(f3.baseURL.Path, "/") {
+		return nil, fmt.Errorf("BaseURL must have a trailing slash: %q", f3.baseURL.String())
+	}
+
+	f3.Accounts = accounts.NewClient(f3.httpClient, f3.baseURL)
 
 	return f3, nil
 }
