@@ -16,7 +16,15 @@ type AccountNotFoundError struct {
 }
 
 func (e *AccountNotFoundError) Error() string {
-	return fmt.Sprintf("Account not found: %s", e.ID)
+	return fmt.Sprintf("account not found: %s", e.ID)
+}
+
+type AccountAlreadyExistsError struct {
+	ID string
+}
+
+func (e *AccountAlreadyExistsError) Error() string {
+	return fmt.Sprintf("account already exists: %s", e.ID)
 }
 
 type InvalidVersionError struct {
@@ -24,5 +32,13 @@ type InvalidVersionError struct {
 }
 
 func (e *InvalidVersionError) Error() string {
-	return fmt.Sprintf("Invalid version: %d", e.Ver)
+	return fmt.Sprintf("invalid version: %d", e.Ver)
+}
+
+type HttpStatusError struct {
+	StatusCode int
+}
+
+func (e *HttpStatusError) Error() string {
+	return fmt.Sprintf("error code returned: %d", e.StatusCode)
 }

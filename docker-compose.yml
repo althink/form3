@@ -1,6 +1,16 @@
 version: '3'
 
 services:
+  tests:    
+    image: golang:1.17.2
+    volumes:
+      - .:/usr/local/go/src/go/form3
+    working_dir: /usr/local/go/src/go/form3
+    command: go test ./... -v -tags=integration
+    environment:
+      - FORM3_HOST=http://accountapi:8080/v1/
+    depends_on:
+      - accountapi
   accountapi:
     image: form3tech/interview-accountapi:v1.0.0-39-gef7db03d
     restart: on-failure

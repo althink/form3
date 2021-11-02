@@ -1,6 +1,10 @@
 package accounts
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 // Accounts service interface
 // See https://api-docs.form3.tech/api.html#organisation-accounts for
@@ -29,6 +33,23 @@ type FetchSuccess struct {
 	Links *Links `json:"links"`
 }
 
+// Create new account object
+func New(id string, orgID string, attributes *Attributes) *Data {
+	return &Data{
+		ID:             id,
+		OrganisationID: orgID,
+		Type:           Type,
+		Attributes:     attributes,
+	}
+}
+
+// Create new account object with random ID
+func NewWithGenID(orgID string, attributes *Attributes) *Data {
+	return New(uuid.New().String(), orgID, attributes)
+}
+
+const Type = "accounts"
+
 // Represents an account in the form3 org section.
 type Data struct {
 	// The specific attributes for each type of resource
@@ -43,7 +64,7 @@ type Data struct {
 	// Required: true
 	OrganisationID string `json:"organisation_id,omitempty"`
 
-	// The type of resource.
+	// The type of resource: "accounts"
 	Type string `json:"type,omitempty"`
 
 	// A counter indicating how many times this resource has been modified.
@@ -52,6 +73,11 @@ type Data struct {
 }
 
 type Attributes struct {
+
+	// Determines the qualifier code with which payments to the account are accepted.
+	// FPS: Must be a valid FPS Acceptance Qualifier if provided. Not supported for FPS Indirect via LHV.
+	AcceptanceQualifier *string `json:"acceptance_qualifier,omitempty"`
+
 	// Classification of account, only used for Confirmation of Payee (CoP).
 	// CoP: Can be either Personal or Business. Defaults to Personal.
 	AccountClassification *string `json:"account_classification,omitempty"`
@@ -79,7 +105,7 @@ type Attributes struct {
 	Bic string `json:"bic,omitempty"`
 
 	// ISO 3166-1 code used to identify the domicile of the account, e.g. 'GB', 'FR'
-	Country *string `json:"country,omitempty"`
+	Country string `json:"country,omitempty"`
 
 	// A free-format reference that can be used to link this account to an external system
 	CustomerID string `json:"customer_id,omitempty"`
@@ -94,9 +120,16 @@ type Attributes struct {
 	// Name of the account holder, up to four lines possible.
 	Name []string `json:"name,omitempty"`
 
+	// Mask to use when validating the reference field of inbound payments to the account
+	// FPS: Payments without matching reference fields will be rejected.
+	// ? matches any character, # matches any numeric characters (0-9), $ matches any alphanumeric character (a-z, A-Z). All other characters are literals.
+	// \ can be used to escape control characters to literals. Maximum length 35 characters. - and space characters are ignored in the reference when matching.
+	// Not supported for FPS Indirect via LHV.
+	ReferenceMask *string `json:"reference_mask,omitempty"`
+
 	// Additional information to identify the account and account holder, only used for Confirmation of Payee (CoP)
 	// CoP: Can be any type of additional identification, e.g. a building society roll number
-	SecondaryIdentification string `json:"secondary_identification,omitempty"`
+	SecondaryIdentification *string `json:"secondary_identification,omitempty"`
 
 	// Status of the account
 	// FPS: Can be pending, confirmed or closed. When this field is closed, status_reason must be provided.
@@ -112,6 +145,19 @@ type Attributes struct {
 	// Flag to indicate if the account has been switched away from this organisation, only used for Confirmation of Payee (CoP)
 	// CoP: Set to true if the account has been switched using the Current Account Switching Service (CASS), false otherwise. Defaults to false.
 	Switched *bool `json:"switched,omitempty"`
+
+	// All-purpose list of key-value pairs to store data related to the account
+	// FPS: Not supported for FPS Indirect via LHV.
+	UserDefinedData []UserDefinedData `json:"user_defined_data,omitempty"`
+
+	// Determines which validations are carried out on inbound payments to the account
+	// FPS: Only card is allowed. Not supported for FPS Indirect via LHV.
+	ValidationType *string `json:"validation_type,omitempty"`
+}
+
+type UserDefinedData struct {
+	Key   string `json:"key,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
 type Links struct {

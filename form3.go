@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/althink/form3/accounts"
 )
 
-var defaultUrl string = "http://localhost:8080"
+var defaultUrl string = "http://localhost:8080/v1/"
 
 type Form3 struct {
 	Accounts accounts.Service
@@ -33,7 +34,12 @@ func WithBaseURL(u url.URL) Option {
 }
 
 func NewClient(opts ...Option) (*Form3, error) {
-	url, err := url.Parse(defaultUrl)
+	host := os.Getenv("FORM3_HOST")
+	if host == "" {
+		host = defaultUrl
+	}
+
+	url, err := url.Parse(host)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse URL: %w", err)
 	}
