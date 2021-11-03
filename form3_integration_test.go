@@ -1,6 +1,6 @@
 //go:build integration
 
-package accounts
+package form3
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/althink/form3/accounts"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -31,8 +32,8 @@ func TestIntegration_Accounts_CreateFetchAndDeleteSuccess(t *testing.T) {
 	c := setUpClient()
 	ctx := context.Background()
 	orgID := uuid.New().String()
-	acc := NewWithGenID(orgID,
-		&Attributes{
+	acc := accounts.NewWithGenID(orgID,
+		&accounts.Attributes{
 			Country:                 "GB",
 			BaseCurrency:            "GBP",
 			AccountNumber:           "41426819",
@@ -51,7 +52,7 @@ func TestIntegration_Accounts_CreateFetchAndDeleteSuccess(t *testing.T) {
 		})
 
 	// when
-	created, err := c.Create(context.Background(), acc)
+	created, err := c.Accounts.Create(context.Background(), acc)
 
 	// then
 	require.Empty(t, err)
@@ -59,12 +60,13 @@ func TestIntegration_Accounts_CreateFetchAndDeleteSuccess(t *testing.T) {
 	require.Equal(t, acc.OrganisationID, created.Data.OrganisationID, "Invalid OrganisationID")
 	require.Equal(t, acc.Type, created.Data.Type, "Invalid Type")
 	require.Equal(t, int64(0), *created.Data.Version, "Invalid Version")
+	require.NotEmpty(t, created.Links.Self)
 	if diff := cmp.Diff(acc.Attributes, created.Data.Attributes); diff != "" {
 		t.Errorf("Created account mismatch (-want +got):\n%s", diff)
 	}
 
 	// when
-	fetched, err := c.Fetch(ctx, created.Data.ID)
+	fetched, err := c.Accounts.Fetch(ctx, created.Data.ID)
 
 	// then
 	require.Empty(t, err)
@@ -72,21 +74,22 @@ func TestIntegration_Accounts_CreateFetchAndDeleteSuccess(t *testing.T) {
 	require.Equal(t, acc.OrganisationID, fetched.Data.OrganisationID, "Invalid OrganisationID")
 	require.Equal(t, acc.Type, fetched.Data.Type, "Invalid Type")
 	require.Equal(t, int64(0), *fetched.Data.Version, "Invalid Version")
+	require.NotEmpty(t, created.Links.Self)
 	if diff := cmp.Diff(acc.Attributes, fetched.Data.Attributes); diff != "" {
 		t.Errorf("Fetched account mismatch (-want +got):\n%s", diff)
 	}
 
 	// when
-	err = c.Delete(ctx, fetched.Data.ID, *fetched.Data.Version)
+	err = c.Accounts.Delete(ctx, fetched.Data.ID, *fetched.Data.Version)
 
 	// then
 	require.Empty(t, err)
 
 	// when
-	_, err = c.Fetch(ctx, created.Data.ID)
+	_, err = c.Accounts.Fetch(ctx, created.Data.ID)
 
 	// then
-	require.IsType(t, &AccountNotFoundError{}, err, "Invalid error type")
+	require.IsType(t, &accounts.AccountNotFoundError{}, err, "Invalid error type")
 }
 
 func TestIntegration_Accounts_CreateFailed_InvalidData(t *testing.T) {
@@ -95,11 +98,11 @@ func TestIntegration_Accounts_CreateFailed_InvalidData(t *testing.T) {
 	ctx := context.Background()
 
 	// when
-	_, err := c.Create(ctx, &Data{Attributes: &Attributes{}})
+	_, err := c.Accounts.Create(ctx, &accounts.Data{Attributes: &accounts.Attributes{}})
 
 	// then
-	require.IsType(t, &InvalidDataError{}, err, "Invalid error type")
-	require.NotEmpty(t, err.(*InvalidDataError).Msg)
+	require.IsType(t, &accounts.InvalidDataError{}, err, "Invalid error type")
+	require.NotEmpty(t, err.(*accounts.InvalidDataError).Msg)
 }
 
 func TestIntegration_Accounts_CreateFailed_AlreadyExists(t *testing.T) {
@@ -111,14 +114,14 @@ func TestIntegration_Accounts_CreateFailed_AlreadyExists(t *testing.T) {
 	accountExists(t, c, accID)
 
 	// when
-	_, err := c.Create(ctx, New(accID, orgID, &Attributes{
+	_, err := c.Accounts.Create(ctx, accounts.New(accID, orgID, &accounts.Attributes{
 		Country: "GB",
 		Name:    []string{"Samantha Holder"},
 	}))
 
 	// then
-	require.IsType(t, &AccountAlreadyExistsError{}, err, "Invalid error type")
-	require.Equal(t, accID, err.(*AccountAlreadyExistsError).ID)
+	require.IsType(t, &accounts.AccountAlreadyExistsError{}, err, "Invalid error type")
+	require.Equal(t, accID, err.(*accounts.AccountAlreadyExistsError).ID)
 }
 
 func TestIntegration_Accounts_FetchFailed_InvalidData(t *testing.T) {
@@ -128,11 +131,11 @@ func TestIntegration_Accounts_FetchFailed_InvalidData(t *testing.T) {
 	accID := "invalid"
 
 	// when
-	_, err := c.Fetch(ctx, accID)
+	_, err := c.Accounts.Fetch(ctx, accID)
 
 	// then
-	require.IsType(t, &InvalidDataError{}, err, "Invalid error type")
-	require.NotEmpty(t, err.(*InvalidDataError).Msg)
+	require.IsType(t, &accounts.InvalidDataError{}, err, "Invalid error type")
+	require.NotEmpty(t, err.(*accounts.InvalidDataError).Msg)
 }
 
 func TestIntegration_Accounts_FetchFailed_UnknownAccount(t *testing.T) {
@@ -142,11 +145,11 @@ func TestIntegration_Accounts_FetchFailed_UnknownAccount(t *testing.T) {
 	accID := "6acb52e8-375b-453e-a3a9-9110c9aca283"
 
 	// when
-	_, err := c.Fetch(ctx, accID)
+	_, err := c.Accounts.Fetch(ctx, accID)
 
 	// then
-	require.IsType(t, &AccountNotFoundError{}, err, "Invalid error type")
-	require.Equal(t, accID, err.(*AccountNotFoundError).ID)
+	require.IsType(t, &accounts.AccountNotFoundError{}, err, "Invalid error type")
+	require.Equal(t, accID, err.(*accounts.AccountNotFoundError).ID)
 }
 
 func TestIntegration_Accounts_DeleteFailed_UnknownAccount(t *testing.T) {
@@ -156,11 +159,11 @@ func TestIntegration_Accounts_DeleteFailed_UnknownAccount(t *testing.T) {
 	accID := "6acb52e8-375b-453e-a3a9-9110c9aca283"
 
 	// when
-	err := c.Delete(ctx, accID, 0)
+	err := c.Accounts.Delete(ctx, accID, 0)
 
 	// then
-	require.IsType(t, &AccountNotFoundError{}, err, "Invalid error type")
-	require.Equal(t, accID, err.(*AccountNotFoundError).ID)
+	require.IsType(t, &accounts.AccountNotFoundError{}, err, "Invalid error type")
+	require.Equal(t, accID, err.(*accounts.AccountNotFoundError).ID)
 }
 
 func TestIntegration_Accounts_DeleteFailed_InvalidVersion(t *testing.T) {
@@ -172,11 +175,11 @@ func TestIntegration_Accounts_DeleteFailed_InvalidVersion(t *testing.T) {
 	accountExists(t, c, accID)
 
 	// when
-	err := c.Delete(ctx, accID, invalidVer)
+	err := c.Accounts.Delete(ctx, accID, invalidVer)
 
 	// then
-	require.IsType(t, &InvalidVersionError{}, err, "Invalid error type")
-	require.Equal(t, invalidVer, err.(*InvalidVersionError).Ver)
+	require.IsType(t, &accounts.InvalidVersionError{}, err, "Invalid error type")
+	require.Equal(t, invalidVer, err.(*accounts.InvalidVersionError).Ver)
 }
 
 func TestIntegration_Accounts_DeleteFailed_InvalidData(t *testing.T) {
@@ -186,19 +189,23 @@ func TestIntegration_Accounts_DeleteFailed_InvalidData(t *testing.T) {
 	accID := "invalid"
 
 	// when
-	err := c.Delete(ctx, accID, 0)
+	err := c.Accounts.Delete(ctx, accID, 0)
 
 	// then
-	require.IsType(t, &InvalidDataError{}, err, "Invalid error type")
-	require.NotEmpty(t, err.(*InvalidDataError).Msg)
+	require.IsType(t, &accounts.InvalidDataError{}, err, "Invalid error type")
+	require.NotEmpty(t, err.(*accounts.InvalidDataError).Msg)
 }
 
-func setUpClient() Service {
+func setUpClient() *Form3 {
 	u, err := url.Parse(resolveApiUrl())
 	if err != nil {
 		log.Fatal(err)
 	}
-	return NewClient(http.DefaultClient, *u)
+	f3, err := NewClient(WithBaseURL(*u))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return f3
 }
 
 func resolveApiUrl() string {
@@ -209,9 +216,9 @@ func resolveApiUrl() string {
 	return host
 }
 
-func accountExists(t *testing.T, c Service, id string) {
-	_, err := c.Create(context.Background(), New(id, uuid.New().String(),
-		&Attributes{
+func accountExists(t *testing.T, c *Form3, id string) {
+	_, err := c.Accounts.Create(context.Background(), accounts.New(id, uuid.New().String(),
+		&accounts.Attributes{
 			Country: "PL",
 			Name:    []string{"John Smith"},
 		}))
