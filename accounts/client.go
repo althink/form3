@@ -128,7 +128,7 @@ func (c *httpClient) do(req *http.Request, v interface{}) (*http.Response, error
 		return resp, &r
 	}
 
-	if v != nil {
+	if v != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		err = json.NewDecoder(resp.Body).Decode(v)
 	}
 	return resp, err
