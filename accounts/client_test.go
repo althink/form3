@@ -118,6 +118,21 @@ func Test_Accounts_CreateFailed_AlreadyExists(t *testing.T) {
 	require.Equal(t, "eb89cce1-3b1f-4b37-967f-23354c5ad61e", err.(*AccountAlreadyExistsError).ID)
 }
 
+func Test_Accounts_CreateFailed_500Error(t *testing.T) {
+	// given
+	ctx := context.Background()
+	responseCode := 500
+	responseBody := ``
+	c := setUpMockClient(withResponse(responseCode, responseBody))
+
+	// when
+	_, err := c.Create(ctx, &Data{ID: "eb89cce1-3b1f-4b37-967f-23354c5ad61e"})
+
+	// then
+	require.IsType(t, &HttpStatusError{}, err, "Invalid error type")
+	require.Equal(t, responseCode, err.(*HttpStatusError).StatusCode)
+}
+
 func Test_Accounts_FetchSuccess(t *testing.T) {
 	// given
 	ctx := context.Background()
@@ -181,6 +196,21 @@ func Test_Accounts_FetchFailed_UnknownAccount(t *testing.T) {
 	require.Equal(t, "eb89cce1-3b1f-4b37-967f-23354c5ad61e", err.(*AccountNotFoundError).ID)
 }
 
+func Test_Accounts_FetchFailed_500Error(t *testing.T) {
+	// given
+	ctx := context.Background()
+	responseCode := 500
+	responseBody := ``
+	c := setUpMockClient(withResponse(responseCode, responseBody))
+
+	// when
+	_, err := c.Fetch(ctx, "eb89cce1-3b1f-4b37-967f-23354c5ad61e")
+
+	// then
+	require.IsType(t, &HttpStatusError{}, err, "Invalid error type")
+	require.Equal(t, responseCode, err.(*HttpStatusError).StatusCode)
+}
+
 func Test_Accounts_DeleteSuccess(t *testing.T) {
 	// given
 	ctx := context.Background()
@@ -242,6 +272,21 @@ func Test_Accounts_DeleteFailed_InvalidData(t *testing.T) {
 	require.IsType(t, &InvalidDataError{}, err, "Invalid error type")
 	require.Equal(t, "some error message", err.(*InvalidDataError).Msg)
 	require.Equal(t, "b5930880-1001-453b-86bd-2c5e29bd98d7", err.(*InvalidDataError).Code)
+}
+
+func Test_Accounts_DeleteFailed_500Error(t *testing.T) {
+	// given
+	ctx := context.Background()
+	responseCode := 500
+	responseBody := ``
+	c := setUpMockClient(withResponse(responseCode, responseBody))
+
+	// when
+	err := c.Delete(ctx, "eb89cce1-3b1f-4b37-967f-23354c5ad61e", 0)
+
+	// then
+	require.IsType(t, &HttpStatusError{}, err, "Invalid error type")
+	require.Equal(t, responseCode, err.(*HttpStatusError).StatusCode)
 }
 
 func setUpMockClient(r RoundTrip) Service {
