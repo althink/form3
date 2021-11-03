@@ -11,15 +11,28 @@ import (
 // more information about operations and fields.
 type Service interface {
 
-	// Register an existing bank account with Form3 or create a new one.
+	// Create registers an existing bank account with Form3 or create a new one.
 	// The country attribute must be specified as a minimum.
 	// Depending on the country, other attributes such as bank_id and bic are mandatory.
+	//
+	// When data format is invalid returns InvalidDataError
+	// When account with given id already exists returns AccountAlreadyExistsError
+	// When other http error status returned returns HttpStatusError
 	Create(ctx context.Context, account *Data) (*CreateSuccess, error)
 
-	// Get a single account using the account ID.
+	// Fetch returns a single account using the account ID.
+	//
+	// When accound with given id does not exist returns AccountNotFoundError
+	// When data format is invalid returns InvalidDataError
+	// When other http error status returned returns HttpStatusError
 	Fetch(ctx context.Context, id string) (*FetchSuccess, error)
 
-	// Delete an account
+	// Delete deltes an account by given id and version.
+	//
+	// When accound with given id does not exist returns AccountNotFoundError
+	// When version is invalid returns InvalidVersionError
+	// When data format is invalid returns InvalidDataError
+	// When other http error status returned returns HttpStatusError
 	Delete(ctx context.Context, id string, version int64) error
 }
 

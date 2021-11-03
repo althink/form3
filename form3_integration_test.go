@@ -201,7 +201,7 @@ func setUpClient() *Form3 {
 	if err != nil {
 		log.Fatal(err)
 	}
-	f3, err := NewClient(WithBaseURL(*u))
+	f3, err := NewClient(WithBaseURL(*u), WithHTTPClient(http.DefaultClient))
 	if err != nil {
 		log.Fatal(err)
 	}

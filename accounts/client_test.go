@@ -95,7 +95,7 @@ func Test_Accounts_CreateFailed_InvalidData(t *testing.T) {
 	c := setUpMockClient(withResponse(responseCode, responseBody))
 
 	// when
-	_, err := c.Create(ctx, &Data{})
+	_, err := c.Create(ctx, NewWithGenID("orgID", &Attributes{}))
 
 	// then
 	require.IsType(t, &InvalidDataError{}, err, "Invalid error type")
@@ -252,14 +252,14 @@ func setUpMockClient(r RoundTrip) Service {
 	return NewClient(&http.Client{Transport: r}, *u)
 }
 
-// Builds a RoundTrip function that returns HTTP response with given statusCode and body
+// withResponse builds a RoundTrip function that returns HTTP response with given statusCode and body
 func withResponse(statusCode int, body string) RoundTrip {
 	return func(*http.Request) (*http.Response, error) {
 		return buildResponse(statusCode, body), nil
 	}
 }
 
-// Build HTTP response with given statusCode and body
+// buildResponse builds HTTP response with given statusCode and body
 func buildResponse(statusCode int, respBody string) *http.Response {
 	return &http.Response{
 		StatusCode:    statusCode,

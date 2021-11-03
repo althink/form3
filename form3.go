@@ -32,7 +32,7 @@ func WithBaseURL(u url.URL) Option {
 	}
 }
 
-// Create new Form3 client.
+// NewClient creates new Form3 client.
 func NewClient(opts ...Option) (*Form3, error) {
 	url, err := url.Parse(defaultUrl)
 	if err != nil {
