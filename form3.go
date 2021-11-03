@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/althink/form3/accounts"
@@ -33,13 +32,9 @@ func WithBaseURL(u url.URL) Option {
 	}
 }
 
+// Create new Form3 client.
 func NewClient(opts ...Option) (*Form3, error) {
-	host := os.Getenv("FORM3_HOST")
-	if host == "" {
-		host = defaultUrl
-	}
-
-	url, err := url.Parse(host)
+	url, err := url.Parse(defaultUrl)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse URL: %w", err)
 	}
